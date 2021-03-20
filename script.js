@@ -82,9 +82,10 @@ function vMixRefresh(data){
     else{
         $(".warning").css("display", "none");
     }
+
+    
     
     for(var i = 0; i < overlayArray.length && i < 9; i++){
-        console.log(overlayArray[i].getAttribute("index"))
         if(parseFloat(overlayArray[i].getAttribute("index")) != 9){
 
             if(overlayArray[i].getElementsByTagName("position")[0] != undefined){
@@ -93,6 +94,7 @@ function vMixRefresh(data){
                 var panY =      (parseFloat(overlayArray[i].getElementsByTagName("position")[0].getAttribute("panY"))    *   100);
                 var panX =      (parseFloat(overlayArray[i].getElementsByTagName("position")[0].getAttribute("panX"))    *   100);
                 var inputKey =  overlayArray[i].getAttribute("key")
+                var inputName =  lastResponse.querySelector(`input[key="${inputKey}"]`).getAttribute("title")
             }
             else{
                 var zoomY =     (100);
@@ -100,6 +102,8 @@ function vMixRefresh(data){
                 var panY =      (0);
                 var panX =      (0);
                 var inputKey =  overlayArray[i].getAttribute("key")
+                var inputName =  lastResponse.querySelector(`input[key="${inputKey}"]`).getAttribute("title")
+
             }
 
             temporaryMultiViewOverlays[i] = {
@@ -108,13 +112,17 @@ function vMixRefresh(data){
                 panX,
                 panY,
                 inputKey,
+                inputName,
             }
                         
         }
     }
     if(JSON.stringify(temporaryMultiViewOverlays) != JSON.stringify(multiViewOverlays)){
+        console.log(multiViewOverlays)
+        console.log(temporaryMultiViewOverlays)
         multiViewOverlays = JSON.parse(JSON.stringify(temporaryMultiViewOverlays))
         refresh();
+        updateTally(true);
         
     }
     updateTally();
@@ -211,15 +219,16 @@ function refresh(){
     
 }
 
-function updateTally(){
-    if(vMixSettings.previousPreviewKey != vMixSettings.previewKey){
+function updateTally(force){
+    console.log("update tally")
+    if(vMixSettings.previousPreviewKey != vMixSettings.previewKey || force){
         if(multiViewOverlays.findIndex(overlay => overlay.inputKey === vMixSettings.previousPreviewKey) != -1){
             $($(".outerContainer").children()[multiViewOverlays.findIndex(overlay => overlay.inputKey === vMixSettings.previousPreviewKey)]).removeClass("preview");
         }
         $($(".outerContainer").children()[multiViewOverlays.findIndex(overlay => overlay.inputKey === vMixSettings.previewKey)]).addClass("preview");
         vMixSettings.previousPreviewKey = vMixSettings.previewKey
     }
-    if(vMixSettings.previousProgramKey != vMixSettings.programKey){
+    if(vMixSettings.previousProgramKey != vMixSettings.programKey || force){
         if(multiViewOverlays.findIndex(overlay => overlay.inputKey === vMixSettings.previousProgramKey) != -1){
             $($(".outerContainer").children()[multiViewOverlays.findIndex(overlay => overlay.inputKey === vMixSettings.previousProgramKey)]).removeClass("program");
         }

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+    <script>
+const downloadFile = (blob, fileName) => {
+  const link = document.createElement('a');
+  // create a blobURI pointing to our Blob
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  // some browser needs the anchor to be in the doc
+  document.body.append(link);
+  link.click();
+  link.remove();
+  // in case the Blob uses a lot of memory
+  setTimeout(() => URL.revokeObjectURL(link.href), 7000);
+};
+
+fetch("./multicamMediaMultiviewLayouts.vMixLayout").then(resp => resp.arrayBuffer()).then(resp => {
+
+downloadFile(new Blob([resp]), "./multicamMediaMultiviewLayouts.vMixLayout");
+});
+
+    </script>
+</body>
+</html>
