@@ -6,16 +6,20 @@
 # Setup
 
 Make a blank input (or with a background image) and start to add layers in a multiview-fashion.
-Add a web-browser input and set it to layer 10 of the new input
-http://multicam.media/multiview
+Add a web-browser input and set it to layer 10 of the new input.
+
+Web Browser URL:
+http://multiview.multicam.media/
 
 ## Parameters
 
 You can change the input and update interval (default 150ms and input 1) by adding the following to the URL:
 http://multicam.media/multiview?Input=2&Interval=500
 
-## Example multiview-layouts
+## Example vMix Preset
 
-Download them from here (right-click and save-as):
+https://multiview.multicam.media/vMixPreset/
 
-http://multiview.multicam.media/multicamMediaMultiviewLayouts.vMixLayout
+## Example multiview-layouts (vMix 24 Only)
+
+https://multiview.multicam.media/vMixLayouts/
