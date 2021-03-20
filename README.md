@@ -16,8 +16,10 @@ http://multiview.multicam.media/
 You can change the input and update interval (default 150ms and input 1) by adding the following to the URL:
 http://multicam.media/multiview?Input=2&Interval=500
 
+## Example vMix Preset
+
+https://multiview.multicam.media/vMixPreset/
+
 ## Example multiview-layouts (vMix 24 Only)
 
-Download them from here (right-click and save-as):
-
-http://multiview.multicam.media/multicamMediaMultiviewLayouts.vMixLayout
+https://multiview.multicam.media/vMixLayouts/
