@@ -9,7 +9,7 @@ Make a blank input (or with a background image) and start to add layers in a mul
 Add a web-browser input and set it to layer 10 of the new input.
 
 Web Browser URL:
-http://multicam.media/multiview
+http://multiview.multicam.media/
 
 ## Parameters
 
