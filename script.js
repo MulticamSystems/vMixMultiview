@@ -12,6 +12,109 @@ var vMixSettings = {
     refreshInterval: 150,
 }
 
+function search(key, keyValue, Array){
+    for (var i=0; i < Array.length; i++) {
+        if (Array[i][key] === keyValue) {
+            return Array[i];
+        }
+    }
+}
+
+function toTitleCase(str) {
+    return str.replace(/(?:^|\s)\w/g, function(match) {
+        return match.toUpperCase();
+    });
+}
+
+var extras = [
+    {
+        name: "clock",
+        zoomY: 50,
+        zoomX: 50,
+        panX: 0,
+        panY: 0,
+        color: "#ffffff",
+        enabled: false,
+        fontSize: 70,
+        template: function(obj){
+            var templateString = `
+            <div class="multiViewBox" style="
+                height: ${obj.zoomY}%;
+                width:  ${obj.zoomX}%;
+                left:   ${((obj.panX)/2) + 50}%;
+                top:    ${((obj.panY*-1)/2) + 50}%;
+            ">
+            <div id="clock" style="color: ${obj.color}; font-size: ${obj.fontSize}px"></div>
+            <div class="inputTitle">${toTitleCase(obj.name)}</div>
+            </div>
+            `
+            return templateString
+        },
+    },
+    {
+        name: "countdown",
+        zoomY: 50,
+        zoomX: 50,
+        panX: 0,
+        panY: 0,
+        color: "#ffffff",
+        enabled: false,
+        fontSize: 70,
+        template: function(obj){
+            var templateString = `
+            <div class="multiViewBox" style="
+                height: ${obj.zoomY}%;
+                width:  ${obj.zoomX}%;
+                left:   ${((obj.panX)/2) + 50}%;
+                top:    ${((obj.panY*-1)/2) + 50}%;
+            ">
+            <div id="countdown" style="color: ${obj.color}; font-size: ${obj.fontSize}px"></div>
+            <div class="inputTitle">${toTitleCase(obj.name)}</div>
+            </div>
+            `
+            return templateString
+        },
+    },
+    {
+        name: "status",
+        zoomY: 50,
+        zoomX: 50,
+        panX: 0,
+        panY: 0,
+        enabled: false,
+        template: function(obj){
+            var templateString = `
+            <div class="multiViewBox" style="
+                height: ${obj.zoomY}%;
+                width:  ${obj.zoomX}%;
+                left:   ${((obj.panX)/2) + 50}%;
+                top:    ${((obj.panY*-1)/2) + 50}%;
+            ">
+                <div class="vMixStatuses">
+                    <div class="column">
+            `;
+            vMixStatuses.forEach((status, i) => {
+                if(i == 3){
+                    templateString += `</div><div class="column">`
+                }
+                if(vMixSettings[status]){
+                    templateString += `<div class="vMixStatus vMixStatusEnabled ${status}  ">${status.toUpperCase()}: </div>`
+                }
+                else{
+                    templateString += `<div class="vMixStatus ${status}  ">${status.toUpperCase()}: </div>`
+                }
+            });
+            templateString += `
+                </div>
+            </div>
+            <div class="inputTitle">${toTitleCase(obj.name)}</div>
+            `
+            return templateString
+        },
+    },
+]
+
+
 if(vars["Input"]){
     vMixSettings.multiViewInput = parseFloat(vars["Input"]) - 1;
  }
@@ -34,13 +137,6 @@ var multiViewOverlays = [];
 var lastResponse;
 var vMixInputs = []
 
-var clock = {
-    zoomY: 25,
-    zoomX: 25,
-    panX: 75,
-    panY: -75,
-}
-
 function log10(x) {
     if(Math.log(x)*20 == -Infinity){
         return 0;
@@ -50,6 +146,15 @@ function log10(x) {
     }
 }
 
+var vMixStatuses = [
+    "recording",
+    "external",
+    "streaming",
+    "playList",
+    "multiCorder",
+    "fullscreen",
+]
+
 function vMixRefresh(data){
     lastResponse = data;
     var temporaryMultiViewOverlays = []
@@ -57,6 +162,9 @@ function vMixRefresh(data){
     vMixSettings.programNumber = parseFloat(data.getElementsByTagName("active")[0].innerHTML)
     vMixSettings.previewKey = data.querySelector(`[number="${vMixSettings.previewNumber}"]`).getAttribute("key")
     vMixSettings.programKey = data.querySelector(`[number="${vMixSettings.programNumber}"]`).getAttribute("key")
+    vMixStatuses.forEach(status => {
+        vMixSettings[status] = data.getElementsByTagName(status)[0].innerHTML == "True"
+    })
 
     Array.prototype.slice.call(data.getElementsByTagName("input"), 0 ).forEach(function(input, i){
         vMixInputs[i] = {}
@@ -70,6 +178,14 @@ function vMixRefresh(data){
         }
         else{
             vMixInputs[i].audio = false
+        }
+        if(input.getAttribute("duration")){
+            vMixInputs[i].video = true
+            vMixInputs[i].duration = input.getAttribute("duration")
+            vMixInputs[i].position = input.getAttribute("position")
+        }
+        else{
+            vMixInputs[i].video = false
         }
     })
     
@@ -190,6 +306,7 @@ function generateVU(bool, overlay){
 }
 
 function refresh(){
+    clockTick()
     console.log("refresh")
     $(".outerContainer").html("")
     multiViewOverlays.forEach(overlay => {
@@ -205,22 +322,16 @@ function refresh(){
         </div>
         `)
     });
-/*     $(".outerContainer").append(`
-    <div class="multiViewBox" style="
-        height: ${clock.zoomY}%;
-        width:  ${clock.zoomX}%;
-        left:   ${((clock.panX)/2) + 50}%;
-        top:    ${((clock.panY*-1)/2) + 50}%;
-    ">
-    <div id="clock"></div>
-    <div class="inputTitle">Clock</div>
-    </div>
-    `) */
+    extras.forEach(extra => {
+    
+        if(extra.enabled == true){
+            $(".outerContainer").append(extra.template(extra))
+        }
+    });
     
 }
 
 function updateTally(force){
-    console.log("update tally")
     if(vMixSettings.previousPreviewKey != vMixSettings.previewKey || force){
         if(multiViewOverlays.findIndex(overlay => overlay.inputKey === vMixSettings.previousPreviewKey) != -1){
             $($(".outerContainer").children()[multiViewOverlays.findIndex(overlay => overlay.inputKey === vMixSettings.previousPreviewKey)]).removeClass("preview");
@@ -245,10 +356,116 @@ let clockTick = () => {
     hrs = hrs < 10 ? "0" + hrs : hrs;
     mins = mins < 10 ? "0" + mins : mins;
     secs = secs < 10 ? "0" + secs : secs;
-  
+
     let time = `${hrs}:${mins}:${secs}`;
-    $("#clock").html(time)
+    if(search("name", "clock", extras).enabled){
+        $("#clock").html(time)
+    };
     setTimeout(clockTick, 1000);
-  };
+}
+clockTick();
+
+function msToTime(s) {
+    var ms = s % 1000;
+    s = (s - ms) / 1000;
+    var secs = s % 60;
+    s = (s - secs) / 60;
+    var mins = s % 60;
+    var hrs = (s - mins) / 60;
   
-  clockTick();
+    return hrs.toString().padStart(2,0) + ':' + mins.toString().padStart(2,0) + ':' + secs.toString().padStart(2,0);
+  }
+    
+function updateCountdown(){
+    if(vMixInputs[vMixSettings.programNumber - 1].video){
+        var timeLeft = parseFloat(vMixInputs[vMixSettings.programNumber - 1].duration) - parseFloat(vMixInputs[vMixSettings.programNumber - 1].position)
+        if(timeLeft < 10000 && timeLeft > 1){
+            $("#countdown").parent().addClass("program")
+            $("#countdown").parent().removeClass("preview")
+        }
+        else if(timeLeft < 60000 && timeLeft > 1){
+            $("#countdown").parent().addClass("preview")
+            $("#countdown").parent().removeClass("program")
+        }
+        else{
+            $("#countdown").parent().removeClass("program")
+            $("#countdown").parent().removeClass("preview")
+        }
+        $("#countdown").html(msToTime(timeLeft))
+    }
+    else{
+        $("#countdown").html("00:00:00");
+        $("#countdown").parent().removeClass("program")
+        $("#countdown").parent().removeClass("preview")
+    }
+    
+}
+
+setInterval(() => {
+    updateCountdown()
+}, 200);
+
+extras.forEach(extra => {
+    $(`#${extra.name}ZoomNumber`).val(extra.zoomX/100)
+    $(`#${extra.name}ZoomSlider`).val(extra.zoomX/100)
+    $(`#${extra.name}ZoomSlider`).on('input',function(e){
+        extra.zoomX = e.target.value * 100;
+        extra.zoomY = e.target.value * 100;
+        $(`#${extra.name}ZoomNumber`).val(e.target.value)
+        refresh();
+
+    });
+    $(`#${extra.name}ZoomNumber`).on('input',function(e){
+        extra.zoomX = e.target.value * 100;
+        extra.zoomY = e.target.value * 100;
+        $(`#${extra.name}ZoomSlider`).val(e.target.value)
+        refresh();
+
+    });
+
+    $(`#${extra.name}PanYNumber`).val(extra.panY/100)
+    $(`#${extra.name}PanYSlider`).val(extra.panY/100)
+    $(`#${extra.name}PanYSlider`).on('input',function(e){
+        extra.panY = e.target.value * 100;
+        $(`#${extra.name}PanYNumber`).val(e.target.value)
+        refresh();
+
+    });
+    $(`#${extra.name}PanYNumber`).on('input',function(e){
+        extra.panY = e.target.value * 100;
+        $(`#${extra.name}PanYSlider`).val(e.target.value)
+        refresh();
+
+    });
+
+    $(`#${extra.name}PanXNumber`).val(extra.panX/100)
+    $(`#${extra.name}PanXSlider`).val(extra.panX/100)
+    $(`#${extra.name}PanXSlider`).on('input',function(e){
+        extra.panX = e.target.value * 100;
+        $(`#${extra.name}PanXNumber`).val(e.target.value)
+        refresh();
+    });
+    $(`#${extra.name}PanXNumber`).on('input',function(e){
+        extra.panX = e.target.value * 100;
+        $(`#${extra.name}PanXSlider`).val(e.target.value)
+        refresh();
+    });
+
+    $(`#${extra.name}Enable`).attr("checked", extra.enabled)
+    $(`#${extra.name}Enable`).on('input',function(e){
+        extra.enabled = e.target.checked;
+        refresh();
+    });
+
+    $(`#${extra.name}FontSize`).val(extra.fontSize)
+    $(`#${extra.name}FontSize`).on('input',function(e){
+        extra.fontSize = e.target.value;
+        refresh();
+    });
+
+    $(`#${extra.name}Color`).val(extra.color)
+    $(`#${extra.name}Color`).on('input',function(e){
+        extra.color = e.target.value;
+        refresh();
+    });
+})

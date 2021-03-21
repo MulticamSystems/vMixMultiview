@@ -17,9 +17,117 @@
     </script>
 </head>
 <body>
+    <div class="hideContainer">
+        <div class="settingsURL">
+            <input type="text">
+        </div>
+        <div class="settings">
+            <div class="settingGroup clock">
+                <div class="settingsHeader">Clock</div>
+                <div class="generalSettings">
+                    <div class="positionGroup">
+                        <label for="clockEnable">Enabled: </label>
+                        <input type="checkbox" id="clockEnable" name="clockEnable"><br><br>
+                    </div>
+                    <div class="positionGroup">
+                        <label for="clockColor">Color: </label>
+                        <input type="color" id="clockColor" name="clockColor" value="#ff0000"><br><br>
+                    </div>
+                    <div class="positionGroup">
+                        <label for="clockFontSize">Font Size: </label>
+                        <input type="number" min="0" max="300" value="0" id="clockFontSize" step="4">
+                    </div>
+                </div>
+                <div class="positionSettings">
+                    <div class="positionGroup">
+                        <label class="PPZLabel" for="clockZoomSlider">Zoom: </label>
+                        <input class="PPZSlider slider" type="range" min="0" max="5" value="0" id="clockZoomSlider" step="0.001">
+                        <input class="PPZInput" type="number" min="0" max="5" value="0" id="clockZoomNumber" step="0.005">
+                    </div>
+                    <div class="positionGroup">
+                        <label class="PPZLabel" for="clockPanYSlider">Pan Y</label>
+                        <input class="PPZSlider slider" type="range" min="-2" max="2" value="0" id="clockPanYSlider" step="0.001">
+                        <input class="PPZInput" type="number" min="-2" max="2" value="0" id="clockPanYNumber" step="0.005">
+                    </div>
+                    <div class="positionGroup">
+                        <label class="PPZLabel" for="clockPanXSlider">Pan X</label>
+                        <input class="PPZSlider slider" type="range" min="-2" max="2" value="0" id="clockPanXSlider" step="0.001">
+                        <input class="PPZInput" type="number" min="-2" max="2" value="0" id="clockPanXNumber" step="0.005">
+                    </div>
+                </div>
+            </div>
+            <div class="settingGroup countdown">
+                <div class="settingsHeader">Status</div>
+                <div class="generalSettings">
+                    <div class="positionGroup">
+                        <label for="statusEnable">Enabled: </label>
+                        <input type="checkbox" id="statusEnable" name="statusEnable"><br><br>
+                    </div>
+                    <div class="positionGroup">
+                        <label for="statusColor">Color: </label>
+                        <input type="color" id="statusColor" name="statusColor" value="#ff0000"><br><br>
+                    </div>
+                    <div class="positionGroup">
+                        <label for="statusFontSize">Font Size: </label>
+                        <input type="number" min="0" max="300" value="0" id="statusFontSize" step="4">
+                    </div>
+                </div>
+                <div class="positionSettings">
+                    <div class="positionGroup">
+                        <label class="PPZLabel" for="statusZoomSlider">Zoom: </label>
+                        <input class="PPZSlider slider" type="range" min="0" max="5" value="0" id="statusZoomSlider" step="0.001">
+                        <input class="PPZInput" type="number" min="0" max="5" value="0" id="statusZoomNumber" step="0.005">
+                    </div>
+                    <div class="positionGroup">
+                        <label class="PPZLabel" for="statusPanYSlider">Pan Y</label>
+                        <input class="PPZSlider slider" type="range" min="-2" max="2" value="0" id="statusPanYSlider" step="0.001">
+                        <input class="PPZInput" type="number" min="-2" max="2" value="0" id="statusPanYNumber" step="0.005">
+                    </div>
+                    <div class="positionGroup">
+                        <label class="PPZLabel" for="statusPanXSlider">Pan X</label>
+                        <input class="PPZSlider slider" type="range" min="-2" max="2" value="0" id="statusPanXSlider" step="0.001">
+                        <input class="PPZInput" type="number" min="-2" max="2" value="0" id="statusPanXNumber" step="0.005">
+                    </div>
+                </div>
+            </div>
+            <div class="settingGroup status">
+                <div class="settingsHeader">Countdown</div>
+                <div class="generalSettings">
+                    <div class="positionGroup">
+                        <label for="countdownEnable">Enabled: </label>
+                        <input type="checkbox" id="countdownEnable" name="countdownEnable"><br><br>
+                    </div>
+                    <div class="positionGroup">
+                        <label for="countdownColor">Color: </label>
+                        <input type="color" id="countdownColor" name="countdownColor" value="#ff0000"><br><br>
+                    </div>
+                    <div class="positionGroup">
+                        <label for="countdownFontSize">Font Size: </label>
+                        <input type="number" min="0" max="300" value="0" id="countdownFontSize" step="4">
+                    </div>
+                </div>
+                <div class="positionSettings">
+                    <div class="positionGroup">
+                        <label class="PPZLabel" for="countdownZoomSlider">Zoom: </label>
+                        <input class="PPZSlider slider" type="range" min="0" max="5" value="0" id="countdownZoomSlider" step="0.001">
+                        <input class="PPZInput" type="number" min="0" max="5" value="0" id="countdownZoomNumber" step="0.005">
+                    </div>
+                    <div class="positionGroup">
+                        <label class="PPZLabel" for="countdownPanYSlider">Pan Y</label>
+                        <input class="PPZSlider slider" type="range" min="-2" max="2" value="0" id="countdownPanYSlider" step="0.001">
+                        <input class="PPZInput" type="number" min="-2" max="2" value="0" id="countdownPanYNumber" step="0.005">
+                    </div>
+                    <div class="positionGroup">
+                        <label class="PPZLabel" for="countdownPanXSlider">Pan X</label>
+                        <input class="PPZSlider slider" type="range" min="-2" max="2" value="0" id="countdownPanXSlider" step="0.001">
+                        <input class="PPZInput" type="number" min="-2" max="2" value="0" id="countdownPanXNumber" step="0.005">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="warning">vMix not running on this computer</div>
     <div class="outerContainer">
-
     </div>
     <script src="jquery.js"></script>
     <script src="script.js"></script>
