@@ -19,7 +19,8 @@
 <body>
     <div class="hideContainer">
         <div class="settingsURL">
-            <input type="text">
+            <div class="settingsTooltip">URL with current settings: </div>
+            <input type="text" id="saveURL">
         </div>
         <div class="settings">
             <div class="settingGroup clock">
@@ -91,7 +92,7 @@
                 </div>
             </div>
             <div class="settingGroup status">
-                <div class="settingsHeader">Countdown</div>
+                <div class="settingsHeader">Count-<br>down</div>
                 <div class="generalSettings">
                     <div class="positionGroup">
                         <label for="countdownEnable">Enabled: </label>

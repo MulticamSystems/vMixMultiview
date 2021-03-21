@@ -255,7 +255,7 @@ div#clock {
 }
 
 br {
-    display: none;
+    /* display: none; */
 }
 
 .settingGroup>* {}
@@ -265,7 +265,7 @@ br {
 .vMixStatuses {
     display: flex;
     flex-direction: row;
-    font-size: 28px;
+    /* font-size: 28px; */
     height: 100%;
     width: 100%;
     justify-content: space-around;
@@ -320,4 +320,22 @@ div#countdown {
     margin: 1%;
     justify-content: center;
     align-items: center;
+}
+
+.hideContainer:hover {
+    opacity: 1;
+}
+
+input#saveURL {
+    width: 80%;
+    font-size: large;
+}
+
+.hideContainer {}
+
+.settingsTooltip {
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px black;
+    padding-right: 10px;
 }

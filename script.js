@@ -26,6 +26,16 @@ function toTitleCase(str) {
     });
 }
 
+var saveSettings = [
+    "zoomY",
+    "zoomX",
+    "panX",
+    "panY",
+    "color",
+    "enabled",
+    "fontSize",
+]
+
 var extras = [
     {
         name: "clock",
@@ -82,6 +92,7 @@ var extras = [
         panX: 0,
         panY: 0,
         enabled: false,
+        fontSize: 36,
         template: function(obj){
             var templateString = `
             <div class="multiViewBox" style="
@@ -90,7 +101,7 @@ var extras = [
                 left:   ${((obj.panX)/2) + 50}%;
                 top:    ${((obj.panY*-1)/2) + 50}%;
             ">
-                <div class="vMixStatuses">
+                <div class="vMixStatuses" style="font-size: ${obj.fontSize}px">
                     <div class="column">
             `;
             vMixStatuses.forEach((status, i) => {
@@ -121,6 +132,14 @@ if(vars["Input"]){
 
  if(vars["Interval"]){
     vMixSettings.refreshInterval = parseFloat(vars["Interval"]);
+ }
+ if(vars["Settings"]){
+    var parsedSettings = JSON.parse(decodeURIComponent(vars.Settings))
+    parsedSettings.forEach((extra, i) => {
+        Object.keys(extra).forEach(property =>{
+            extras[i][property] = extra[property]
+        })
+    })
  }
 
 setInterval(() => {
@@ -162,9 +181,6 @@ function vMixRefresh(data){
     vMixSettings.programNumber = parseFloat(data.getElementsByTagName("active")[0].innerHTML)
     vMixSettings.previewKey = data.querySelector(`[number="${vMixSettings.previewNumber}"]`).getAttribute("key")
     vMixSettings.programKey = data.querySelector(`[number="${vMixSettings.programNumber}"]`).getAttribute("key")
-    vMixStatuses.forEach(status => {
-        vMixSettings[status] = data.getElementsByTagName(status)[0].innerHTML == "True"
-    })
 
     Array.prototype.slice.call(data.getElementsByTagName("input"), 0 ).forEach(function(input, i){
         vMixInputs[i] = {}
@@ -233,9 +249,15 @@ function vMixRefresh(data){
                         
         }
     }
-    if(JSON.stringify(temporaryMultiViewOverlays) != JSON.stringify(multiViewOverlays)){
-        console.log(multiViewOverlays)
-        console.log(temporaryMultiViewOverlays)
+    
+    var forceRefresh = false
+    vMixStatuses.forEach(status => {
+        if(vMixSettings[status] != (data.getElementsByTagName(status)[0].innerHTML == "True")){
+            vMixSettings[status] = data.getElementsByTagName(status)[0].innerHTML == "True"
+            forceRefresh = true
+        }
+    })
+    if(JSON.stringify(temporaryMultiViewOverlays) != JSON.stringify(multiViewOverlays) || forceRefresh){
         multiViewOverlays = JSON.parse(JSON.stringify(temporaryMultiViewOverlays))
         refresh();
         updateTally(true);
@@ -306,8 +328,17 @@ function generateVU(bool, overlay){
 }
 
 function refresh(){
-    clockTick()
-    console.log("refresh")
+    var saveArray = []
+    extras.forEach((extra, i) => {
+        if(saveArray[i] == undefined){
+            saveArray[i] = {}
+        }
+        saveSettings.forEach(setting =>{
+            saveArray[i][setting] = extra[setting]
+        })
+    });
+    $("#saveURL").val("https://multiviewbeta.multicam.media?Settings=" + encodeURIComponent(JSON.stringify(saveArray)))
+    clockTick();
     $(".outerContainer").html("")
     multiViewOverlays.forEach(overlay => {
         $(".outerContainer").append(`
