@@ -337,7 +337,10 @@ function refresh(){
             saveArray[i][setting] = extra[setting]
         })
     });
-    $("#saveURL").val("https://multiviewbeta.multicam.media?Settings=" + encodeURIComponent(JSON.stringify(saveArray)))
+    $("#saveURL").val(`${window.location.href.split('?')[0]}?Settings=${encodeURIComponent(JSON.stringify(saveArray))}`)
+    $("#saveURL").focus(function(){
+        $(this).select();
+    })
     clockTick();
     $(".outerContainer").html("")
     multiViewOverlays.forEach(overlay => {
