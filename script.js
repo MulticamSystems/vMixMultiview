@@ -157,12 +157,24 @@ var lastResponse;
 var vMixInputs = []
 
 function log10(x) {
-    if(Math.log(x)*20 == -Infinity){
-        return 0;
+    // Convert to dB scale with proper reference level for audio meters
+    // Audio meters typically show from 0dB to -60dB (or lower)
+    if (x <= 0) {
+        return 0; // Silent
     }
-    else{
-        return Math.log(x)*21.5;
-    }
+    
+    // Convert to decibels (20 * log10(x)) with proper scaling
+    // x is typically between 0 and 1 from vMix
+    const dB = 20 * Math.log10(x);
+    
+    // Map from dB range to percentage (0 to 100)
+    // 0dB -> 100%, -60dB -> 0%
+    const minDb = -60; // Minimum dB to display
+    
+    // Calculate percentage: 0dB = 100%, minDb = 0%
+    const percentage = Math.max(0, Math.min(100, (dB - minDb) * 100 / Math.abs(minDb)));
+    
+    return percentage;
 }
 
 var vMixStatuses = [
@@ -182,19 +194,44 @@ function vMixRefresh(data){
     vMixSettings.previewKey = data.querySelector(`[number="${vMixSettings.previewNumber}"]`).getAttribute("key")
     vMixSettings.programKey = data.querySelector(`[number="${vMixSettings.programNumber}"]`).getAttribute("key")
 
+    // Get master volume data
+    const masterVolume = data.getElementsByTagName("master")[0];
+    const masterMeterF1 = masterVolume ? masterVolume.getAttribute("meterF1") : null;
+    const masterMeterF2 = masterVolume ? masterVolume.getAttribute("meterF2") : null;
+    const masterMuted = masterVolume ? masterVolume.getAttribute("muted") === "True" : false;
+
+    // Add master audio data to vMixInputs array
+    vMixInputs.master = {
+        audio: true,
+        muted: masterMuted,
+        audioL: masterMeterF1 !== null ? log10(parseFloat(masterMeterF1)) : 0,
+        audioR: masterMeterF2 !== null ? log10(parseFloat(masterMeterF2)) : 0
+    };
+
     Array.prototype.slice.call(data.getElementsByTagName("input"), 0 ).forEach(function(input, i){
         vMixInputs[i] = {}
         vMixInputs[i].title = input.getAttribute("title");
         vMixInputs[i].key = input.getAttribute("key");
-        if(input.getAttribute("muted")){
-            vMixInputs[i].audio = true
-            vMixInputs[i].muted = input.getAttribute("muted") == "True"
-            vMixInputs[i].audioL = log10(input.getAttribute("meterF1") * 100)
-            vMixInputs[i].audioR = log10(input.getAttribute("meterF2") * 100)
+        
+        // Detect if this is an "Output" input for master audio
+        vMixInputs[i].isOutput = vMixInputs[i].title === "Output";
+        
+        const meterF1 = input.getAttribute("meterF1");
+        const meterF2 = input.getAttribute("meterF2");
+        
+        if (meterF1 !== null && meterF2 !== null) {
+            vMixInputs[i].audio = true;
+            vMixInputs[i].muted = input.getAttribute("muted") === "True";
+            
+            const leftLevel = parseFloat(meterF1);
+            const rightLevel = parseFloat(meterF2);
+            
+            vMixInputs[i].audioL = log10(leftLevel);
+            vMixInputs[i].audioR = log10(rightLevel);
+        } else {
+            vMixInputs[i].audio = false;
         }
-        else{
-            vMixInputs[i].audio = false
-        }
+        
         if(input.getAttribute("duration")){
             vMixInputs[i].video = true
             vMixInputs[i].duration = input.getAttribute("duration")
@@ -245,6 +282,7 @@ function vMixRefresh(data){
                 panY,
                 inputKey,
                 inputName,
+                isOutput: lastResponse.querySelector(`input[key="${inputKey}"]`).getAttribute("title") === "Output"
             }
                         
         }
@@ -269,34 +307,63 @@ function vMixRefresh(data){
 
 function updateVU(){
     overlayArray.forEach((overlay, i) => {
-        if(vMixInputs[vMixInputs.findIndex(vMixInputs => vMixInputs.key === overlay.getAttribute("key"))].audio){
-            $($(".outerContainer").children()[i]).find(".actualMeterL").css("clip-path", "inset(" + (Math.floor((100 - vMixInputs[vMixInputs.findIndex(vMixInputs => vMixInputs.key === overlay.getAttribute("key"))].audioL)/3.125)*3.125) + "% 0% 0% 0%)");
-            $($(".outerContainer").children()[i]).find(".actualMeterR").css("clip-path", "inset(" + (Math.floor((100 - vMixInputs[vMixInputs.findIndex(vMixInputs => vMixInputs.key === overlay.getAttribute("key"))].audioR)/3.125)*3.125) + "% 0% 0% 0%)");
-            if(vMixInputs[vMixInputs.findIndex(vMixInputs => vMixInputs.key === overlay.getAttribute("key"))].muted){
+        const inputIndex = vMixInputs.findIndex(input => input.key === overlay.getAttribute("key"));
+        
+        // Check if multiViewOverlays[i] exists before accessing its properties
+        const outputBox = i < multiViewOverlays.length && multiViewOverlays[i] ? 
+                          multiViewOverlays[i].isOutput : false;
+        
+        // Show VU meters if the input has audio OR if it's the Output box (for master audio)
+        if ((inputIndex >= 0 && vMixInputs[inputIndex].audio) || outputBox) {
+            // For output box, always use master audio
+            // For regular inputs with audio, use their own levels
+            const useValues = outputBox && vMixInputs.master ? 
+                { 
+                    audioL: vMixInputs.master.audioL, 
+                    audioR: vMixInputs.master.audioR,
+                    muted: vMixInputs.master.muted
+                } : 
+                {
+                    audioL: inputIndex >= 0 ? vMixInputs[inputIndex].audioL : 0,
+                    audioR: inputIndex >= 0 ? vMixInputs[inputIndex].audioR : 0,
+                    muted: inputIndex >= 0 ? vMixInputs[inputIndex].muted : false
+                };
+            
+            // The clip path should match the percentage directly
+            const leftClipPercent = Math.max(0, 100 - useValues.audioL);
+            const rightClipPercent = Math.max(0, 100 - useValues.audioR);
+            
+            // Apply clip path for proper visual display
+            $($(".outerContainer").children()[i]).find(".actualMeterL").css("clip-path", `inset(${leftClipPercent}% 0% 0% 0%)`);
+            $($(".outerContainer").children()[i]).find(".actualMeterR").css("clip-path", `inset(${rightClipPercent}% 0% 0% 0%)`);
+            
+            // Make sure meters are visible with proper opacity
+            $($(".outerContainer").children()[i]).find(".actualMeterL").css("opacity", "0.7");
+            $($(".outerContainer").children()[i]).find(".actualMeterR").css("opacity", "0.7");
+            
+            if (useValues.muted) {
                 $($(".outerContainer").children()[i]).find(".actualMeterR").css("filter", "grayscale(100%)");
                 $($(".outerContainer").children()[i]).find(".actualMeterL").css("filter", "grayscale(100%)");
-            }
-            else{
+            } else {
                 $($(".outerContainer").children()[i]).find(".actualMeterR").css("filter", "grayscale(0%)");
                 $($(".outerContainer").children()[i]).find(".actualMeterL").css("filter", "grayscale(0%)");
-
             }
         }
     });
 }
 
-function generateVU(bool, overlay){
+function generateVU(bool, overlay, isMaster = false){
     if(bool){
         return(`
         <div class="leftAlignContainer">
         <div class="audioMeterContainer">
             <div class="audioMeter">
                 <div class="meterOutline"></div>
-                <div class="actualMeter actualMeterL"></div>
+                <div class="actualMeter actualMeterL" style="opacity: 0.7;"></div>
             </div>
             <div class="audioMeter">
                 <div class="meterOutline"></div>
-                <div class="actualMeter actualMeterR"></div>
+                <div class="actualMeter actualMeterR" style="opacity: 0.7;"></div>
             </div>
             <div class="VUlabels">
                 <div class="VUlabel" style="transform: scale(${overlay.zoomY / 100})">0</div>
@@ -337,19 +404,33 @@ function refresh(){
             saveArray[i][setting] = extra[setting]
         })
     });
-    $("#saveURL").val("https://multiviewbeta.multicam.media?Settings=" + encodeURIComponent(JSON.stringify(saveArray)))
+    $("#saveURL").val("https://multiview.multicam.media?Settings=" + encodeURIComponent(JSON.stringify(saveArray)))
     clockTick();
     $(".outerContainer").html("")
     multiViewOverlays.forEach(overlay => {
+        // Determine if this is an Output overlay
+        const isOutput = overlay.isOutput;
+        
+        // Find the input index - we'll need this to check for audio
+        const inputIndex = vMixInputs.findIndex(input => input.key === overlay.inputKey);
+        
+        // Generate HTML for the multiview box
         $(".outerContainer").append(`
-        <div class="multiViewBox" style="
+        <div class="multiViewBox${isOutput ? ' outputBox' : ''}" style="
             height: ${overlay.zoomY}%;
             width:  ${overlay.zoomX}%;
             left:   ${((overlay.panX)/2) + 50}%;
             top:    ${((overlay.panY*-1)/2) + 50}%;
         ">
         <div class="inputTitle">${lastResponse.querySelector(`input[key="${overlay.inputKey}"]`).getAttribute("title")}</div>
-        ${generateVU(vMixInputs[vMixInputs.findIndex(vMixInputs => vMixInputs.key === overlay.inputKey)].audio, overlay)}
+        ${generateVU(
+            // Show VU meters if:
+            // 1. The input has audio OR
+            // 2. It's the Output box (for master audio)
+            (inputIndex >= 0 && vMixInputs[inputIndex]?.audio) || isOutput, 
+            overlay,
+            isOutput
+        )}
         </div>
         `)
     });
